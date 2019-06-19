@@ -25,6 +25,7 @@ if [ ! -f $file ]
 fi
 
 # create the md5sum from the file to check
+# cut print selected part of lines from file to standard output
 filemd5=`md5sum $file | cut -d " " -f1`
 
 # check the md5 and
@@ -66,6 +67,4 @@ if [ -f $fingerprintfile ]
 fi
 
 # save the current md5
-# sure you don't have to do this when the file hasn't changed
-# but you know I'm lazy and it works...
 echo $filemd5 > $fingerprintfile
