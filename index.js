@@ -1,5 +1,4 @@
-
- const express = require('express');
+const express = require('express');
 const path = require('path');
 const app = express();
 const fs = require('fs');
@@ -10,7 +9,7 @@ var ntpClient = require('ntp-client');
 const dns = require('dns');
 var async = require('async');
 const exec = require('child_process').exec
-
+const now = require('nano-time');
 
 //Set static folder
 //app.use(express.static(path.join(__dirname, 'public')))
@@ -18,26 +17,27 @@ const exec = require('child_process').exec
 //homepage
 app.get('/', function (req, res) {
         res.send('ETSI MP1 - TRY - /timing/current_time || /timing/timing_caps')
-        }
-)
+})
 
 
 
 //display /timing/current_time page
 app.get('/timing/current_time', function (req, res)
 {
+
+//curentlly using UNIX time
         var seconds = new Date().getTime() / 1000;
-        seconds = Math.floor(seconds);
-        //nano seconds do not work properly
-        var timeInNs = nano(process.hrtime());
-        var istracable = "TRACEABLE";
+        seconds = parseInt(Math.floor(seconds));
+        //nano seconds do not work properly.
+        var timeInNs = parseInt(now());
+        var istracable = "TRACEABLE";//I asume that unix time is an UTC time therefore it is traceable
+ //store value is JSON as required
                 res.json({
-                        seconds : `${seconds}`,
-                        nanosecond : `${timeInNs}`,
-                        timeSourceStatus : `${istracable}`
+                        seconds : seconds,
+                        nanoSeconds : timeInNs,
+                        timeSourceStatus : istracable
                         });
 })
-
 
 function execute(command, callback){
     exec(command, function(error, stdout, stderr){ callback(stdout); });
@@ -47,25 +47,22 @@ function execute(command, callback){
 //display /timing/current_time page
 app.get('/timing/timing_caps', function (req, res, data) {
 
-//function nearestPow2( aSize ){
-//  return Math.round( Math.log2( aSize ));
-//}
-//var timeAsPow = nearestPow2(timeSpent);
-
 
 var seconds = new Date().getTime() / 1000;
- seconds = Math.floor(seconds);
+seconds = parseInt(Math.floor(seconds));
 //nano seconds do not work properly
-var timeInNs = nano(process.hrtime());
+var timeInNs = parseInt(now());
 //IP or DNS name? When?
 var ip = require("ip");
-
 var serverAddrType = "IP_ADDRESS";
 
-
-var myCallback = function(data,data2) {
+//Calback 3 data done async way - linux cmd
+var myCallback = function(data,data2,data3) {
   var str = data;
   var str2 = data2;
+  var reqDelay = Math.floor(Math.random() * (60 - 5) + 5);
+   var priority = data3;
+  priority = parseInt(priority.substring(11,priority.length-1));
   str = str.substring(6);
   var arr = str.split("\n").map(val => Number(val));
   var arr2 = str2.split(" ").map(val => Number(val));
@@ -88,31 +85,31 @@ var myCallback = function(data,data2) {
         keyNumber = arr2[0]
         }
 
- //Placing JSON structure on the html site
+//Placing JSON structure on the html site
+//reqdelay and local priorities has a fixed values
 
 res.json({
-	
 timeStamp : {
-        seconds : `${seconds}`,
-        nanosecond : `${timeInNs}`,
+        seconds : seconds,
+        nanosecond : timeInNs,
 },
 ntpServers : [
         {
-        ntpServerAddrType : `${serverAddrType}`,
-        ntpServerAddr : `${ip.address()}`,
-        minPollingInterval : `${minPoll}`,
-        maxPollingInterval : `${maxPoll}`,
-        localPriority   : "1",
-        authenticationOption : `${auth}`,
-        authenticationKeyNum : `${keyNumber}`
+        ntpServerAddrType : serverAddrType,
+        ntpServerAddr : ip.address(),
+        minPollingInterval : minPoll,
+        maxPollingInterval : maxPoll,
+        localPriority   : 1,
+        authenticationOption : auth,
+        authenticationKeyNum : keyNumber
         }
 ],
         ptpMasters :
                 [
                         {
-                        ptpMasterIpAddress : `${ip.address()}`,
-                        ptpMasterLocalPriority : '1',
-                        delayReqMaxRate : '10'
+                        ptpMasterIpAddress : ip.address(),
+                        ptpMasterLocalPriority : priority,
+                        delayReqMaxRate : reqDelay
                         }
                 ]
 
@@ -121,10 +118,11 @@ ntpServers : [
   };
 
 var usingItNow = function(callback){
-
-execute("ntpq -p | awk '{print $6}'", function(name){
-        execute("cat /etc/ntp.keys", function(email){
-            callback(name, email);
+execute("ntpq -p | awk '{print $6}'", function(poll){
+        execute("cat /etc/ntp.keys", function(keys){
+                execute("cat /etc/linuxptp/ptp4l.conf | grep priority1", function(priority){
+                        callback(poll, keys, priority );
+                });
         });
     });
 };
@@ -139,5 +137,4 @@ usingItNow(myCallback);
 const PORT = process.env.PORT || 5050;
 
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
-
-	
+                                                                                                                 
