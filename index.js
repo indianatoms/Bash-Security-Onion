@@ -1,13 +1,6 @@
 const express = require('express');
-const path = require('path');
 const app = express();
-const fs = require('fs');
-const nano = require('nanoseconds');
 const publicIp = require('public-ip');
-const PublicIp = require('nodejs-publicip');
-var ntpClient = require('ntp-client');
-const dns = require('dns');
-var async = require('async');
 const exec = require('child_process').exec
 const now = require('nano-time');
 
@@ -61,7 +54,7 @@ var myCallback = function(data,data2,data3) {
   var str = data;
   var str2 = data2;
   var reqDelay = Math.floor(Math.random() * (60 - 5) + 5);
-   var priority = data3;
+  var priority = data3;
   priority = parseInt(priority.substring(11,priority.length-1));
   str = str.substring(6);
   var arr = str.split("\n").map(val => Number(val));
@@ -104,7 +97,7 @@ ntpServers : [
         authenticationKeyNum : keyNumber
         }
 ],
-        ptpMasters :
+  ptpMasters :
                 [
                         {
                         ptpMasterIpAddress : ip.address(),
@@ -137,4 +130,4 @@ usingItNow(myCallback);
 const PORT = process.env.PORT || 5050;
 
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
-                                                                                                                 
+                                                                                                                                                                                   132
