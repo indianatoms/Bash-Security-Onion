@@ -2,6 +2,21 @@
 #
 # Provides      : Automatical configuration od Network interfaces of Openstack machine
 # 
+#NEEDS TO BE DEFINE BY A USER!!!
+DNS_IP="172.20.5.15"
+#NEEDS TO BE DEFINE BY A USER
+
+
+OUTPUT1="$(cat /etc/resolv.conf | grep $DNS_IP)"
+
+	if [ -z "$OUTPUT1" ]
+	then
+		echo "new nameserver added"
+		#sed patter for adding a line (nameserver 172.20.5.15) after line (search openstacklocal novalocal) -i  parameter means save
+		sed -i 's/search openstacklocal novalocal/search openstacklocal novalocal\nnameserver 172.20.5.15/' /etc/resolv.conf
+	else
+		echo "Given nameserver already exist!"
+fi
 
 OUTPUT1="$(ifconfig)"
 OUTPUT2="$(ifconfig -a)"
@@ -42,4 +57,5 @@ ZONE=public" >> /etc/sysconfig/network-scripts/'ifcfg'-${array[$index]}
 	fi
 done
 #restart configuration
-systemctl restart network.service
+#systemctl restart network.service
+service network restart
