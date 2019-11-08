@@ -13,7 +13,7 @@ OUTPUT1="$(cat /etc/resolv.conf | grep $DNS_IP)"
 	then
 		echo "new nameserver added"
 		#sed patter for adding a line (nameserver 172.20.5.15) after line (search openstacklocal novalocal) -i  parameter means save
-		sed -i 's/search openstacklocal novalocal/search openstacklocal novalocal\nnameserver 172.20.5.15/' /etc/resolv.conf
+		sudo echo "supersede domain-name-servers $DNS_IP;" >> /etc/dhcp/dhclient.conf 
 	else
 		echo "Given nameserver already exist!"
 fi
